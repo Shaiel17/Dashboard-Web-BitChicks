@@ -66,7 +66,7 @@
   </div>
 
   <script>
-    fetch('https://eceda2a7cd3b476fa5cbfef1130ea644.vfs.cloud9.us-east-1.amazonaws.com/api/estadisticas')
+    fetch('https://dashboard-web-bitchicks.onrender.com/api/estadisticas')
       .then(res => res.json())
       .then(data => {
         const nombres = data.map(j => `${j.nombre} ${j.apellido}`);
