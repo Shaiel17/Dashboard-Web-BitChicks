@@ -25,12 +25,12 @@ db.connect((err) => {
 });
 
 // Ruta para servir los archivos estáticos desde la carpeta 'public'
-const frontendPath = path.join(__dirname, 'public'); // Cambié 'Frontend' por 'public'
-app.use(express.static(frontendPath));
+const frontendPath = path.join(__dirname, 'public'); // Ruta correcta para acceder a la carpeta 'public'
+app.use(express.static(frontendPath)); // Sirve todos los archivos estáticos dentro de 'public'
 
 // Ruta raíz para servir el index.html
 app.get('/', (req, res) => {
-  res.sendFile(path.join(frontendPath, 'index.html'));
+  res.sendFile(path.join(frontendPath, 'index.html')); // Sirve el index.html desde la carpeta 'public'
 });
 
 // Rutas adicionales de la API
@@ -65,7 +65,7 @@ app.post('/api/login', (req, res) => {
 
 // Ruta catch-all para SPA
 app.get('*', (req, res) => {
-  res.sendFile(path.join(frontendPath, 'index.html'));
+  res.sendFile(path.join(frontendPath, 'index.html')); // Ruta para manejar cualquier otra petición y redirigir al index.html
 });
 
 // Puerto dinámico para Render
