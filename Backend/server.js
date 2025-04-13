@@ -85,6 +85,7 @@ app.post('/api/login', (req, res) => {
 });
 
 // Iniciar el servidor en Cloud9 (puerto 8080)
-app.listen(8080, '0.0.0.0', () => {
-  console.log('🚀 Servidor corriendo en http://localhost:8080');
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });
