@@ -9,11 +9,11 @@ app.use(express.json());
 
 // Configuración de conexión a MySQL usando variables de entorno
 const db = mysql.createConnection({
-  host: process.env.DB_HOST,     // Usar la variable de entorno configurada en Render
-  user: process.env.DB_USER,     // Usar la variable de entorno configurada en Render
-  password: process.env.DB_PASSWORD,  // Usar la variable de entorno configurada en Render
-  database: process.env.DB_NAME, // Usar la variable de entorno configurada en Render
-  port: process.env.DB_PORT || 3306  // Si tienes un puerto específico, usa la variable de entorno o el valor por defecto
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT || 3306
 });
 
 db.connect((err) => {
@@ -24,38 +24,22 @@ db.connect((err) => {
   }
 });
 
-// ⚠️ Ruta para servir el index.html
-const frontendPath = path.join(__dirname, '..', 'Frontend');
+// Ruta para servir los archivos estáticos desde la carpeta 'public'
+const frontendPath = path.join(__dirname, 'public'); // Cambié 'Frontend' por 'public'
 app.use(express.static(frontendPath));
 
-// Ruta raíz
+// Ruta raíz para servir el index.html
 app.get('/', (req, res) => {
   res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
-// Ruta de prueba
+// Rutas adicionales de la API
 app.get('/api/prueba', (req, res) => {
   res.json({ mensaje: 'Ruta /api/prueba funcionando correctamente 🎉' });
 });
 
-// Ruta para obtener estadísticas
 app.get('/api/estadisticas', (req, res) => {
-  const query = `
-    SELECT 
-      u.idUsuario,
-      u.nombre, 
-      u.apellido,
-      u.pais,
-      e.totalHorasJugadas,
-      e.totalSesiones,
-      e.progresoTotal,
-      e.ultimaSesion,
-      e.primerLoginDia,
-      m.iq, m.hambre, m.aseo
-    FROM Usuario u
-    JOIN EstadisticasJugador e ON u.idUsuario = e.idUsuario
-    JOIN Mascota m ON u.idMascota = m.idMascota;
-  `;
+  const query = `SELECT ...`; // Tu consulta aquí
   db.query(query, (err, results) => {
     if (err) {
       console.error('❌ Error en la consulta:', err);
@@ -66,17 +50,9 @@ app.get('/api/estadisticas', (req, res) => {
   });
 });
 
-// Ruta para login
 app.post('/api/login', (req, res) => {
   const { idUsuario } = req.body;
-
-  const updateQuery = `
-    UPDATE EstadisticasJugador 
-    SET 
-      ultimaSesion = NOW(),
-      primerLoginDia = IF(primerLoginDia IS NULL, NOW(), primerLoginDia) 
-    WHERE idUsuario = ?
-  `;
+  const updateQuery = `UPDATE EstadisticasJugador SET ...`; // Tu actualización aquí
   db.query(updateQuery, [idUsuario], (err, results) => {
     if (err) {
       console.error('❌ Error al actualizar la sesión:', err);
@@ -87,7 +63,7 @@ app.post('/api/login', (req, res) => {
   });
 });
 
-// 🛑 Ruta catch-all para SPA o rutas desconocidas (opcional pero recomendable)
+// Ruta catch-all para SPA
 app.get('*', (req, res) => {
   res.sendFile(path.join(frontendPath, 'index.html'));
 });
