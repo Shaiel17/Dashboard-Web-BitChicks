@@ -1,22 +1,19 @@
 const express = require('express');
-const path = require('path');
 const mysql = require('mysql2');
 const cors = require('cors');
-require('dotenv').config(); // Cargar las variables de entorno desde .env
+const path = require('path');
 
 const app = express();
-
-// Servir los archivos estáticos desde la carpeta 'public'
-const frontendPath = path.join(__dirname, 'public'); // Ruta correcta para acceder a la carpeta 'public'
-app.use(express.static(frontendPath)); // Sirve todos los archivos estáticos dentro de 'public'
+app.use(cors());
+app.use(express.json());
 
 // Configuración de conexión a MySQL usando variables de entorno
 const db = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT || 3306  // Usamos 3306 por defecto si no está definido
+  host: process.env.DB_HOST,       // Usamos la variable de entorno para el host
+  user: process.env.DB_USER,       // Usamos la variable de entorno para el usuario
+  password: process.env.DB_PASSWORD, // Usamos la variable de entorno para la contraseña
+  database: process.env.DB_NAME,   // Usamos la variable de entorno para el nombre de la base de datos
+  port: process.env.DB_PORT || 3306  // Usamos el puerto de la variable de entorno, o 3306 por defecto
 });
 
 // Conectar a la base de datos
@@ -28,7 +25,10 @@ db.connect((err) => {
   }
 });
 
-// Ruta raíz para servir el index.html desde la carpeta 'public'
+// Ruta raíz para servir el index.html
+const frontendPath = path.join(__dirname, 'public');
+app.use(express.static(frontendPath)); // Sirve todos los archivos estáticos dentro de 'public'
+
 app.get('/', (req, res) => {
   res.sendFile(path.join(frontendPath, 'index.html')); // Sirve el index.html desde la carpeta 'public'
 });
@@ -88,8 +88,8 @@ app.post('/api/login', (req, res) => {
   });
 });
 
-// Iniciar el servidor en el puerto definido en el archivo .env (o por defecto 8080)
-const PORT = process.env.PORT || 8080;  // Usar el puerto de .env o el por defecto
+// Iniciar el servidor en el puerto 8080 o el puerto configurado en las variables de entorno
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });
