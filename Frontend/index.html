@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard BitChicks</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+    }
+    h1, h2 {
+      color: #f0f0f0;
+      text-align: center;
+    }
+    .container {
+      padding: 20px;
+    }
+    #horasChart, #pieChart {
+      margin-top: 20px;
+    }
+    #map {
+      height: 400px;
+      margin-top: 20px;
+    }
+    #userStats {
+      margin-top: 30px;
+      text-align: center;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      background-color: #2a2a2a;
+      margin: 10px;
+      padding: 10px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Dashboard BitChicks</h1>
+    
+    <!-- Gráfico de Horas Jugadas -->
+    <canvas id="horasChart" width="600" height="300"></canvas>
+
+    <!-- Gráfico de Pie con países -->
+    <canvas id="pieChart" width="600" height="300"></canvas>
+
+    <!-- Mapa de países -->
+    <div id="map"></div>
+
+    <!-- Estadísticas de Usuarios -->
+    <div id="userStats">
+      <h2>Estadísticas de Usuario</h2>
+      <ul id="usuarioData"></ul>
+    </div>
+  </div>
+
+  <script>
+    fetch('https://eceda2a7cd3b476fa5cbfef1130ea644.vfs.cloud9.us-east-1.amazonaws.com/api/estadisticas')
+      .then(res => res.json())
+      .then(data => {
+        const nombres = data.map(j => `${j.nombre} ${j.apellido}`);
+        const horas = data.map(j => parseFloat(j.totalHorasJugadas));
+        const primerLoginDia = data.map(j => new Date(j.primerLoginDia).toLocaleString());
+        const ultimaSesion = data.map(j => new Date(j.ultimaSesion).toLocaleString());
+        const paises = data.map(j => j.pais);
+
+        // Gráfico de Barras: Horas Jugadas
+        new Chart(document.getElementById('horasChart'), {
+          type: 'bar',
+          data: {
+            labels: nombres,
+            datasets: [{
+              label: 'Horas Jugadas',
+              data: horas,
+              backgroundColor: 'rgba(75, 192, 192, 0.6)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: { 
+                beginAtZero: true
+              }
+            }
+          }
+        });
+
+        // Gráfico de Pastel: Porcentaje de Jugadores por País
+        const paisesContados = {};
+        paises.forEach(pais => {
+          paisesContados[pais] = (paisesContados[pais] || 0) + 1;
+        });
+
+        const paisesLabels = Object.keys(paisesContados);
+        const paisesData = Object.values(paisesContados);
+
+        new Chart(document.getElementById('pieChart'), {
+          type: 'pie',
+          data: {
+            labels: paisesLabels,
+            datasets: [{
+              data: paisesData,
+              backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#FF0000', '#32CD32'],
+            }]
+          },
+          options: {
+            responsive: true
+          }
+        });
+
+        // Mostrar datos de primer login y última sesión
+        const usuarioDataList = document.getElementById('usuarioData');
+        data.forEach((user, index) => {
+          const listItem = document.createElement('li');
+          listItem.innerHTML = `
+            ${user.nombre} ${user.apellido}:
+            <br> País: ${user.pais}
+            <br> Primer login: ${primerLoginDia[index]}
+            <br> Última sesión: ${ultimaSesion[index]}
+          `;
+          usuarioDataList.appendChild(listItem);
+        });
+
+        // Mapa interactivo con los países
+        const map = L.map('map').setView([20, 0], 2);  // Coordenadas iniciales para el mapa mundial
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Función para obtener las coordenadas de un país usando Nominatim API
+        function obtenerCoordenadasPais(pais) {
+          const url = `https://nominatim.openstreetmap.org/search?country=${pais}&format=json`;
+
+          return fetch(url)
+            .then(response => response.json())
+            .then(data => {
+              if (data && data.length > 0) {
+                const lat = data[0].lat;
+                const lon = data[0].lon;
+                return { lat, lon };
+              }
+              return null;
+            })
+            .catch(error => console.error('Error al obtener coordenadas:', error));
+        }
+
+        // Agregar marcadores para cada país en el mapa
+        paises.forEach(pais => {
+          obtenerCoordenadasPais(pais).then(coordinates => {
+            if (coordinates) {
+              const { lat, lon } = coordinates;
+              L.marker([lat, lon]).addTo(map)
+                .bindPopup(`<b>${pais}</b>`)
+                .openPopup();
+            }
+          });
+        });
+      })
+      .catch(error => console.error('Error al cargar los datos:', error));
+  </script>
+</body>
+</html>
