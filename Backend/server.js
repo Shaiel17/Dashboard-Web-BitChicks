@@ -1,21 +1,21 @@
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Configuración de conexión a MySQL
+// Configuración de conexión a MySQL usando variables de entorno
 const db = mysql.createConnection({
-  host: 'database-bitchicks-web.cwoorlsk0gxa.us-east-1.rds.amazonaws.com',
-  user: 'admin',
-  password: 'BitChicks24',
-  database: 'BITCHICKS',
-  port: 3306
+  host: process.env.DB_HOST,     // Usar la variable de entorno configurada en Render
+  user: process.env.DB_USER,     // Usar la variable de entorno configurada en Render
+  password: process.env.DB_PASSWORD,  // Usar la variable de entorno configurada en Render
+  database: process.env.DB_NAME, // Usar la variable de entorno configurada en Render
+  port: process.env.DB_PORT || 3306  // Si tienes un puerto específico, usa la variable de entorno o el valor por defecto
 });
 
-// Conectar a la base de datos
 db.connect((err) => {
   if (err) {
     console.error('❌ Error al conectar a la base de datos:', err);
@@ -24,9 +24,13 @@ db.connect((err) => {
   }
 });
 
+// ⚠️ Ruta para servir el index.html
+const frontendPath = path.join(__dirname, '..', 'Frontend');
+app.use(express.static(frontendPath));
+
 // Ruta raíz
 app.get('/', (req, res) => {
-  res.send('¡Servidor funcionando! Ruta raíz activa ✅');
+  res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
 // Ruta de prueba
@@ -41,12 +45,12 @@ app.get('/api/estadisticas', (req, res) => {
       u.idUsuario,
       u.nombre, 
       u.apellido,
-      u.pais,  -- Agregado el país
+      u.pais,
       e.totalHorasJugadas,
       e.totalSesiones,
       e.progresoTotal,
-      e.ultimaSesion,  -- Asegúrate de que esta columna esté incluida
-      e.primerLoginDia,  -- Asegúrate de que esta columna esté incluida
+      e.ultimaSesion,
+      e.primerLoginDia,
       m.iq, m.hambre, m.aseo
     FROM Usuario u
     JOIN EstadisticasJugador e ON u.idUsuario = e.idUsuario
@@ -62,11 +66,10 @@ app.get('/api/estadisticas', (req, res) => {
   });
 });
 
-// Ruta para registrar el login de un usuario (actualiza el primer login y última sesión)
+// Ruta para login
 app.post('/api/login', (req, res) => {
-  const { idUsuario } = req.body;  // Suponiendo que el idUsuario se pasa en el cuerpo de la solicitud
+  const { idUsuario } = req.body;
 
-  // Actualizamos el primer login del día si es la primera sesión
   const updateQuery = `
     UPDATE EstadisticasJugador 
     SET 
@@ -84,7 +87,12 @@ app.post('/api/login', (req, res) => {
   });
 });
 
-// Iniciar el servidor en Cloud9 (puerto 8080)
+// 🛑 Ruta catch-all para SPA o rutas desconocidas (opcional pero recomendable)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
+// Puerto dinámico para Render
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
