@@ -39,7 +39,7 @@ app.get('/api/prueba', (req, res) => {
 });
 
 app.get('/api/estadisticas', (req, res) => {
-  const query = `SELECT ...`; // Tu consulta aquí
+  const query = `SELECT * FROM EstadisticasJugador`; // Ejemplo de consulta
   db.query(query, (err, results) => {
     if (err) {
       console.error('❌ Error en la consulta:', err);
